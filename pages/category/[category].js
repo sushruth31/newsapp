@@ -1,14 +1,56 @@
 import axios from "axios";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import useSWR from "swr";
+import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
+import CardContent from "@mui/material/CardContent";
+import CardMedia from "@mui/material/CardMedia";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import useSWRInfinite from "swr/infinite";
+import useInfiniteLoading from "../../hooks/useinfiniteloading";
 
 export default function () {
   let {
     query: { category },
   } = useRouter();
 
-  const { data } = useSWR(`/api/category/${category}`, url => axios.get(url).then(res => res.data), { suspense: true });
+  let fetcher = url => axios.get(url).then(res => res.data);
+
+  let getKey = (pageIndex, previousPageData) => {
+    if (previousPageData && !previousPageData.length) return null;
+    return `/api/category/${category}?page=${pageIndex}&limit=${6}`;
+  };
+
+  let { data, error, size, setSize, isLoadingMore } = useInfiniteLoading(getKey, fetcher, { suspense: true });
+
+  function NewsCard({ source: { name }, author, title, description, urlToImage, url, publishedAt, content }) {
+    return (
+      <Card className="w-[500px] mb-20">
+        <CardMedia component="img" height="140" image={urlToImage} alt="green iguana" />
+        <CardContent>
+          <Typography className="font-bold" gutterBottom variant="h4" component="div">
+            {name}
+          </Typography>
+          <Typography gutterBottom variant="h5" component="div">
+            {title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {description}
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            {publishedAt}
+          </Typography>
+        </CardContent>
+        <CardActions>
+          <Button size="small">Share</Button>
+          <Button onClick={() => window.open(url)} size="small">
+            Learn More
+          </Button>
+        </CardActions>
+      </Card>
+    );
+  }
 
   return (
     <div>
@@ -18,9 +60,20 @@ export default function () {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="w-screen  h-screen flex flex-col ml-56 p-10">
+      <div className="w-screen h-screen flex flex-col ml-56 p-10">
         <div className="">{category}</div>
-        <div>{JSON.stringify(data)}</div>
+        <div className="flex flex-col px-28">
+          <div className="grid grid-cols-2">
+            {data.map(arr => {
+              return arr.map(el => <NewsCard {...el} />);
+            })}
+          </div>
+          <div className="flex items-center w-full justify-center mb-20">
+            <Button onClick={() => setSize(size + 1)} className="w-40" variant="contained">
+              {isLoadingMore ? "Loading" : "Load More"}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

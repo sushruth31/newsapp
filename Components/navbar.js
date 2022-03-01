@@ -8,6 +8,8 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/Inbox";
 import { useRouter } from "next/router";
+import Link from "next/link";
+import React from "react";
 
 export default function () {
   async function fetcher(url) {
@@ -19,18 +21,26 @@ export default function () {
 
   let { data } = useSWR("/api/topics", fetcher, { suspense: true });
 
+  function MyListItem({ children, topic }) {
+    let className = router.asPath.includes(topic) ? `bg-gray-500` : "";
+
+    return <Link href={`/category/${topic}`}>{React.cloneElement(children, { className })}</Link>;
+  }
+
   function Item({ topic }) {
     return (
       <nav aria-label="main mailbox folders">
         <List>
-          <ListItem onClick={() => router.push(`/category/${topic}`)} disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
-                <InboxIcon />
-              </ListItemIcon>
-              <ListItemText primary={topic} />
-            </ListItemButton>
-          </ListItem>
+          <MyListItem topic={topic}>
+            <ListItem disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  <InboxIcon />
+                </ListItemIcon>
+                <ListItemText primary={topic} />
+              </ListItemButton>
+            </ListItem>
+          </MyListItem>
         </List>
       </nav>
     );
@@ -38,7 +48,7 @@ export default function () {
 
   return (
     <>
-      <div className="flex flex-col w-56 bg-gray-300 h-screen fixed">
+      <div className="flex flex-col w-56 bg-gray-200 opacity-60 h-screen fixed">
         <div className="w-full flex h-16 items-center mt-1 justify-center">
           <input onClick={() => router.push("/search")} className="rounded w-11/12" placeholder="Search" />
         </div>

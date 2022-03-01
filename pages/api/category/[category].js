@@ -11,7 +11,10 @@ export default async function (req, res) {
     `https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=${apiKey}`,
   ];
 
-  let { category } = req.query;
+  let { category, page, limit } = req.query;
+
+  let newPage = page === 0 ? page : page * limit + 1;
+
   let index = topics.findIndex(topic => topic === category);
 
   let url = urls[index];
@@ -20,5 +23,5 @@ export default async function (req, res) {
 
   let { data } = await axios.get(url);
 
-  return res.status(200).json(data.articles);
+  return res.status(200).json(data.articles.slice(newPage, newPage + 6));
 }
