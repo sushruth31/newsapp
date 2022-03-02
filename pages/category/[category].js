@@ -9,6 +9,8 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import useSWRInfinite from "swr/infinite";
 import useInfiniteLoading from "../../hooks/useinfiniteloading";
+import useObserver from "../../hooks/useobserver";
+import { useEffect } from "react";
 
 export default function () {
   let {
@@ -23,6 +25,8 @@ export default function () {
   };
 
   let { data, error, size, setSize, isLoadingMore } = useInfiniteLoading(getKey, fetcher, { suspense: true });
+
+  let { ref, isIntersecting } = useObserver();
 
   function NewsCard({ source: { name }, author, title, description, urlToImage, url, publishedAt, content }) {
     return (
@@ -62,18 +66,22 @@ export default function () {
 
       <div className="w-screen h-screen flex flex-col ml-56 p-10">
         <div className="">{category}</div>
-        <div className="flex flex-col px-28">
-          <div className="grid grid-cols-2">
-            {data.map(arr => {
-              return arr.map(el => <NewsCard {...el} />);
-            })}
+        {error ? (
+          <div>error</div>
+        ) : (
+          <div className="flex flex-col px-28">
+            <div className="grid grid-cols-2">
+              {data.map(arr => {
+                return arr.map(el => <NewsCard {...el} />);
+              })}
+            </div>
+            <div className="flex items-center w-full justify-center mb-20">
+              <div ref={ref} onClick={() => setSize(size + 1)} className="w-40" variant="contained">
+                {isLoadingMore ? "Loading" : "Load More"}
+              </div>
+            </div>
           </div>
-          <div className="flex items-center w-full justify-center mb-20">
-            <Button onClick={() => setSize(size + 1)} className="w-40" variant="contained">
-              {isLoadingMore ? "Loading" : "Load More"}
-            </Button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import "../styles/main.css";
 import Navbar from "../Components/navbar";
+import { ErrorBoundary } from "react-error-boundary";
 
 import { Suspense, useEffect, useState } from "react";
 
@@ -31,16 +32,27 @@ function SuspenseInitialRender({ fallback, children }) {
   }
 }
 
+function ErrorFallback({ error, resetErrorBoundary }) {
+  return (
+    <div role="alert">
+      <p>Something went wrong:</p>
+      <pre>{error.message}</pre>
+      <button onClick={resetErrorBoundary}>Try again</button>
+    </div>
+  );
+}
+
 export default function ({ Component, pageProps }) {
   return (
     <>
       <Suspense fallback={<div>Loading</div>}>
         <div className="flex">
           <Navbar />
-
-          <SuspenseInitialRender fallback={<Spinner />}>
-            <Component {...pageProps} />
-          </SuspenseInitialRender>
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <SuspenseInitialRender fallback={<Spinner />}>
+              <Component {...pageProps} />
+            </SuspenseInitialRender>
+          </ErrorBoundary>
         </div>
       </Suspense>
     </>
