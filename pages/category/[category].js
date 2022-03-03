@@ -7,12 +7,14 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import useSWRInfinite from "swr/infinite";
 import useInfiniteLoading from "../../hooks/useinfiniteloading";
 import useObserver from "../../hooks/useobserver";
-import { useEffect } from "react";
+import { CircularProgress } from "@mui/material";
+import useScreenSize from "../../hooks/useScreenSize";
 
 export default function () {
+  let width = useScreenSize();
+
   let {
     query: { category },
   } = useRouter();
@@ -26,15 +28,17 @@ export default function () {
 
   let { data, error, size, setSize, isLoadingMore } = useInfiniteLoading(getKey, fetcher, { suspense: true });
 
-  let { ref, isIntersecting } = useObserver();
+  let ref = useObserver(() => {
+    if (!isLoadingMore) setSize(size + 1);
+  }, [category, size, isLoadingMore]);
 
-  function NewsCard({ source: { name }, author, title, description, urlToImage, url, publishedAt, content }) {
+  function NewsCard({ source_id, title, video_url, description, image_url, link, pubDate, content }) {
     return (
-      <Card className="w-[500px] mb-20">
-        <CardMedia component="img" height="140" image={urlToImage} alt="green iguana" />
+      <Card className="mb-20 mx-10">
+        <CardMedia component="img" height="140" image={image_url} alt="green iguana" />
         <CardContent>
           <Typography className="font-bold" gutterBottom variant="h4" component="div">
-            {name}
+            {source_id}
           </Typography>
           <Typography gutterBottom variant="h5" component="div">
             {title}
@@ -43,12 +47,12 @@ export default function () {
             {description}
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
-            {publishedAt}
+            {pubDate}
           </Typography>
         </CardContent>
         <CardActions>
           <Button size="small">Share</Button>
-          <Button onClick={() => window.open(url)} size="small">
+          <Button onClick={() => window.open(link)} size="small">
             Learn More
           </Button>
         </CardActions>
@@ -64,23 +68,25 @@ export default function () {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="w-screen h-screen flex flex-col ml-56 p-10">
-        <div className="">{category}</div>
+      <div className="flex flex-col ml-56 p-16 ">
         {error ? (
           <div>error</div>
+        ) : data[0].length === 0 ? (
+          <div>No data</div>
         ) : (
-          <div className="flex flex-col px-28">
-            <div className="grid grid-cols-2">
+          <>
+            <div className={width > 900 ? "grid grid-cols-2" : "flex flex-col"}>
               {data.map(arr => {
-                return arr.map(el => <NewsCard {...el} />);
+                return arr.map((el, i) => <NewsCard key={i} {...el} />);
               })}
             </div>
-            <div className="flex items-center w-full justify-center mb-20">
-              <div ref={ref} onClick={() => setSize(size + 1)} className="w-40" variant="contained">
-                {isLoadingMore ? "Loading" : "Load More"}
+            <div ref={ref}></div>
+            {isLoadingMore && (
+              <div className="w-full flex items-center justify-center">
+                <CircularProgress />
               </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
